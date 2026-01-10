@@ -3,6 +3,13 @@ import Navigation from './navigation/Navigation';
 // styles
 import './styles/site.css';
 
-const App: React.FC = () => <Navigation />;
+// contexts
+import { AuthProvider } from './contexts/AuthContext';
+
+const App: React.FC = () => (
+  <AuthProvider>
+    <Navigation />
+  </AuthProvider>
+);
 
 export default App;

@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 
+// components
+import AuthGuard from '../utils/auth-guard';
+
 // pages
 import MarketScreen from '../screens/Market/MarketScreen';
 import SigninScreen from '../screens/Members/SigninScreen';
@@ -13,14 +16,50 @@ import TransactionsScreen from '../screens/Transactions/TransactionsScreen';
 
 const Navigation: React.FC = () => (
   <Routes>
-    <Route path='/' element={<SigninScreen />} />
-    <Route path='/market' element={<MarketScreen />} />
-    <Route path='/members' element={<ProfileScreen />} />
-    <Route path='/capital' element={<CapitalScreen />} />
-    <Route path='/dashboard' element={<DashboardScreen />} />
-    <Route path='/members/signup' element={<SignupScreen />} />
-    <Route path='/transactions' element={<TransactionsScreen />} />
-    <Route path='/members/forgot-password' element={<ForgotScreen />} />
+    {/* Public routes */}
+    <Route path='/' element={
+      <AuthGuard requireAuth={false}>
+        <SigninScreen />
+      </AuthGuard>
+    } />
+    <Route path='/members/signup' element={
+      <AuthGuard requireAuth={false}>
+        <SignupScreen />
+      </AuthGuard>
+    } />
+    <Route path='/members/forgot-password' element={
+      <AuthGuard requireAuth={false}>
+        <ForgotScreen />
+      </AuthGuard>
+    } />
+    
+    {/* Protected routes */}
+    <Route path='/market' element={
+      <AuthGuard requireAuth={true}>
+        <MarketScreen />
+      </AuthGuard>
+    } />
+    <Route path='/members' element={
+      <AuthGuard requireAuth={true}>
+        <ProfileScreen />
+      </AuthGuard>
+    } />
+    <Route path='/capital' element={
+      <AuthGuard requireAuth={true}>
+        <CapitalScreen />
+      </AuthGuard>
+    } />
+    <Route path='/dashboard' element={
+      <AuthGuard requireAuth={true}>
+        <DashboardScreen />
+      </AuthGuard>
+    } />
+    <Route path='/transactions' element={
+      <AuthGuard requireAuth={true}>
+        <TransactionsScreen />
+      </AuthGuard>
+    } />
+    
     <Route path='*' element={<NotFoundScreen />} />
   </Routes>
 );

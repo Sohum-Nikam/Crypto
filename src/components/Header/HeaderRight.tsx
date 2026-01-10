@@ -1,7 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
 
+// contexts
+import { useAuth } from '../../contexts/AuthContext';
+
 const HeaderRight: React.FC = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className='header-right no-select'>
@@ -56,8 +64,8 @@ const HeaderRight: React.FC = () => {
         <ul className='header-user nowrap'>
           <li>
             <Link to='/members'>
-              <span>Cenk SARI</span>
-              <span>@cenksari</span>
+              <span>{user ? `${user.name} ${user.lastname}` : 'Guest'}</span>
+              <span>{user ? `@${user.email.split('@')[0]}` : '@guest'}</span>
             </Link>
           </li>
           <li>
@@ -71,7 +79,7 @@ const HeaderRight: React.FC = () => {
             </Link>
           </li>
           <li className='responsive-hide'>
-            <Link to='/' className='signout'>
+            <Link to='/' className='signout' onClick={handleLogout}>
               <i className='material-icons'>power_settings_new</i>
             </Link>
           </li>

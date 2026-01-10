@@ -1,6 +1,9 @@
 import { useState } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+// contexts
+import { useAuth } from '../../contexts/AuthContext';
 
 // hooks
 import useFormEvents from '../../hooks/useFormEvents';
@@ -35,6 +38,8 @@ interface IFormProps {
 
 const SignupScreen: React.FC = () => {
   const { onlyNumbers, onlyEmail } = useFormEvents();
+  const { register } = useAuth();
+  const navigate = useNavigate();
 
   const [formValues, setFormValues] = useState<IFormProps>({
     email: '',
@@ -55,6 +60,9 @@ const SignupScreen: React.FC = () => {
     agreeToPolicies2: false,
     agreeToPolicies3: false,
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   /**
    * Handles input changes in the sign-up form.
@@ -92,8 +100,33 @@ const SignupScreen: React.FC = () => {
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    * @returns {void}
    */
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (formValues.password !== formValues.password1) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      await register({
+        name: formValues.name,
+        lastname: formValues.lastname,
+        email: formValues.email,
+        phone: formValues.phone,
+        password: formValues.password,
+      });
+      
+      // Redirect to dashboard after successful registration
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -237,8 +270,13 @@ const SignupScreen: React.FC = () => {
                       </div>
                     </div>
                     <div className='form-line'>
+                      {error && (
+                        <div className='error-message' style={{ color: 'red', marginBottom: '10px' }}>
+                          {error}
+                        </div>
+                      )}
                       <div className='buttons'>
-                        <FormButton text='Sign up' />
+                        <FormButton text={loading ? 'Signing up...' : 'Sign up'} disabled={loading} />
                       </div>
                     </div>
                     <div className='form-line'>

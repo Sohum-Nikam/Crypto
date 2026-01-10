@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 import { Link, useNavigate } from 'react-router-dom';
 
-// hooks
-import useFormEvents from '../../hooks/useFormEvents';
+// contexts
+import { useAuth } from '../../contexts/AuthContext';
 
 // components
 import Box from '../../components/Common/Box';
@@ -13,19 +13,21 @@ import FormButton from '../../components/Forms/FormButton';
 
 // interfaces
 interface IFormProps {
-  phone: string;
+  email: string;
   password: string;
 }
 
 const SigninScreen: React.FC = () => {
   const navigate = useNavigate();
-
-  const { onlyNumbers } = useFormEvents();
+  const { login } = useAuth();
 
   const [formValues, setFormValues] = useState<IFormProps>({
-    phone: '',
+    email: '',
     password: '',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   /**
    * Handles input changes in the sign-in form.
@@ -48,10 +50,21 @@ const SigninScreen: React.FC = () => {
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    * @returns {void}
    */
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    navigate('/market');
+    setLoading(true);
+    setError('');
+    
+    try {
+      await login(formValues.email, formValues.password);
+      // Redirect to dashboard after successful login
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,14 +90,13 @@ const SigninScreen: React.FC = () => {
                   <div className='form-elements'>
                     <div className='form-line'>
                       <div className='full-width'>
-                        <label htmlFor='phone'>Phone number</label>
+                        <label htmlFor='email'>Email address</label>
                         <FormInput
-                          type='text'
-                          name='phone'
-                          onKeyDown={onlyNumbers}
+                          type='email'
+                          name='email'
                           onChange={handleChange}
-                          value={formValues.phone}
-                          placeholder='Enter your phone number'
+                          value={formValues.email}
+                          placeholder='Enter your email address'
                         />
                       </div>
                     </div>
@@ -106,8 +118,13 @@ const SigninScreen: React.FC = () => {
                       </div>
                     </div>
                     <div className='form-line'>
+                      {error && (
+                        <div className='error-message' style={{ color: 'red', marginBottom: '10px' }}>
+                          {error}
+                        </div>
+                      )}
                       <div className='buttons'>
-                        <FormButton text='Sign in' />
+                        <FormButton text={loading ? 'Signing in...' : 'Sign in'} disabled={loading} />
                       </div>
                     </div>
                     <div className='form-line'>

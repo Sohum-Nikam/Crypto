@@ -2,8 +2,8 @@ import { useState } from 'react';
 
 import { Link } from 'react-router-dom';
 
-// hooks
-import useFormEvents from '../../hooks/useFormEvents';
+// contexts
+import { useAuth } from '../../contexts/AuthContext';
 
 // components
 import Box from '../../components/Common/Box';
@@ -13,15 +13,19 @@ import FormButton from '../../components/Forms/FormButton';
 
 // interfaces
 interface IFormProps {
-  phone: string;
+  email: string;
 }
 
 const ForgotScreen: React.FC = () => {
-  const { onlyNumbers } = useFormEvents();
+  const { forgotPassword } = useAuth();
 
-  const [formValues, setFormValues] = useState<IFormProps>({
-    phone: '',
+  const [formValues, setFormValues] = useState<IFormProps>({  
+    email: '',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState('');
 
   /**
    * Handles input changes in the forgot password form.
@@ -44,8 +48,21 @@ const ForgotScreen: React.FC = () => {
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    * @returns {void}
    */
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      await forgotPassword(formValues.email);
+      setSuccessMessage('Password reset link sent to your email. Please check your inbox.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,14 +88,13 @@ const ForgotScreen: React.FC = () => {
                   <div className='form-elements'>
                     <div className='form-line'>
                       <div className='full-width'>
-                        <label htmlFor='phone'>Phone number</label>
+                        <label htmlFor='email'>Email address</label>
                         <FormInput
-                          type='text'
-                          name='phone'
-                          onKeyDown={onlyNumbers}
+                          type='email'
+                          name='email'
                           onChange={handleChange}
-                          value={formValues.phone}
-                          placeholder='Enter your phone number'
+                          value={formValues.email}
+                          placeholder='Enter your email address'
                         />
                       </div>
                     </div>
@@ -88,8 +104,18 @@ const ForgotScreen: React.FC = () => {
                       </div>
                     </div>
                     <div className='form-line'>
+                      {error && (
+                        <div className='error-message' style={{ color: 'red', marginBottom: '10px' }}>
+                          {error}
+                        </div>
+                      )}
+                      {successMessage && (
+                        <div className='success-message' style={{ color: 'green', marginBottom: '10px' }}>
+                          {successMessage}
+                        </div>
+                      )}
                       <div className='buttons'>
-                        <FormButton text='Send' />
+                        <FormButton text={loading ? 'Sending...' : 'Send'} disabled={loading} />
                       </div>
                     </div>
                     <div className='form-line'>

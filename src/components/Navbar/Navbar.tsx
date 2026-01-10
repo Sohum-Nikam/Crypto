@@ -48,12 +48,6 @@ const Navbar: React.FC = () => (
       <strong>Crypto Exchange</strong>
       <p>
         {new Date().getFullYear()} &copy; All rights reserved.
-        <br />
-        <br />
-        Made with <span>❤</span> by{' '}
-        <a target='_blank' rel='noreferrer' href='https://www.cenksari.com'>
-          Cenk SARI
-        </a>
       </p>
     </div>
   </nav>
