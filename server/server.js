@@ -10,6 +10,10 @@ const { createTransport } = require('nodemailer');
 const http = require('http');
 require('dotenv').config();
 
+// Import Coinbase market service
+const CoinbaseMarketService = require('../services/coinbaseMarketService');
+const coinbaseService = new CoinbaseMarketService();
+
 // Validate required environment variables
 if (!process.env.COINBASE_API_KEY || !process.env.COINBASE_SECRET_KEY) {
   console.warn('Warning: Coinbase API credentials not found in environment variables');
@@ -481,39 +485,33 @@ let priceUpdateInterval;
 // Function to fetch and broadcast price updates
 const broadcastPriceUpdates = async () => {
   try {
-    // Get current BTC-USD price from Coinbase API
-    const response = await axios.get('https://api.exchange.coinbase.com/products/BTC-USD/ticker');
-    const { price } = response.data;
+    // Get current prices for multiple symbols using the service
+    const symbols = ['BTC-USD', 'ETH-USD', 'SOL-USD']; // Add more as needed
+    const prices = await coinbaseService.fetchMultiplePrices(symbols);
     
-    // Get timestamp
-    const timestamp = Date.now();
-    
-    // Format data similar to candlestick format
-    const priceData = {
-      symbol: 'BTC-USD',
-      price: parseFloat(price),
-      timestamp: timestamp
-    };
-    
-    // Broadcast to all connected clients
-    io.emit('priceUpdate', priceData);
+    // Broadcast each price update to all connected clients
+    if (prices && prices.length > 0) {
+      prices.forEach(priceData => {
+        io.emit('price_update', priceData); // Changed event name to snake_case
+      });
+    }
     
   } catch (error) {
-    console.error('Error fetching price update:', error.message);
+    console.error('Error fetching price updates:', error.message);
     
-    // If API fails, send last known price or fallback
-    const fallbackData = {
-      symbol: 'BTC-USD',
-      price: 0, // This will be handled by frontend as an error state
+    // If API fails, send error notification
+    const errorData = {
+      symbol: 'ERROR',
+      price: 0,
       timestamp: Date.now(),
-      error: 'Failed to fetch price'
+      error: 'Failed to fetch price updates'
     };
-    io.emit('priceUpdate', fallbackData);
+    io.emit('price_update', errorData);
   }
 };
 
-// Start price updates every 5 seconds
-priceUpdateInterval = setInterval(broadcastPriceUpdates, 5000);
+// Start price updates every 3 seconds
+priceUpdateInterval = setInterval(broadcastPriceUpdates, 3000);
 
 // Stop interval on server shutdown
 process.on('SIGINT', () => {

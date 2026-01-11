@@ -295,41 +295,44 @@ const CandleStick: React.FC = () => {
     // Connect to WebSocket
     const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:4567');
     
-    socket.on('priceUpdate', (data: PriceData) => {
+    socket.on('price_update', (data: PriceData) => {
       if (data.error) {
         setError(data.error);
         return;
       }
       
-      setError(null);
-      setCurrentPrice(data.price);
-      
-      // Update the chart with the new price
-      setState(prevState => {
-        // Get the current series data
-        const seriesData = [...prevState.series[0].data];
+      // Only update if this is BTC-USD data (or the primary pair we're showing)
+      if (data.symbol === 'BTC-USD') {
+        setError(null);
+        setCurrentPrice(data.price);
         
-        // Add the new data point
-        const newPoint = {
-          x: new Date(data.timestamp),
-          y: [data.price, data.price, data.price, data.price] // [open, high, low, close] - all same for current price
-        };
-        
-        // Keep only the last 50 data points to prevent memory issues
-        if (seriesData.length >= 50) {
-          seriesData.shift(); // Remove the oldest point
-        }
-        
-        seriesData.push(newPoint);
-        
-        return {
-          ...prevState,
-          series: [{
-            ...prevState.series[0],
-            data: seriesData
-          }]
-        };
-      });
+        // Update the chart with the new price
+        setState(prevState => {
+          // Get the current series data
+          const seriesData = [...prevState.series[0].data];
+          
+          // Add the new data point
+          const newPoint = {
+            x: new Date(data.timestamp),
+            y: [data.price, data.price, data.price, data.price] // [open, high, low, close] - all same for current price
+          };
+          
+          // Keep only the last 50 data points to prevent memory issues
+          if (seriesData.length >= 50) {
+            seriesData.shift(); // Remove the oldest point
+          }
+          
+          seriesData.push(newPoint);
+          
+          return {
+            ...prevState,
+            series: [{
+              ...prevState.series[0],
+              data: seriesData
+            }]
+          };
+        });
+      }
     });
     
     // Clean up on unmount
