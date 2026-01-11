@@ -1,97 +1,132 @@
-# React Crypto Exchange Template
+# Crypto Exchange Platform
 
-Are you ready to dive into the world of cryptocurrency trading? Look no further! This React Crypto Exchange Template is designed to provide a solid foundation for building a comprehensive cryptocurrency exchange platform. With its sleek and modern design, this template is perfect for anyone looking to create a user-friendly and intuitive trading experience.
+A modern full-stack cryptocurrency exchange application that simulates real-world trading using live market data, secure authentication, and a functional wallet system.
 
-**Key Features**
+---
 
-- **Real-time Market Data**: Stay up-to-date with the latest market trends and prices.
-- **User Profile Management**: Manage your account, view transaction history, and track your portfolio.
-- **Secure Transactions**: Execute trades with confidence using our secure transaction processing system.
-- **Multi-Currency Support**: Trade with a variety of cryptocurrencies and fiat currencies.
-- **Responsive Design**: Accessible on any device, ensuring a seamless user experience across all platforms.
+## Overview
 
-**Why Choose This Template?**
+This project is built to closely replicate the core workflows of a real crypto exchange — from user onboarding and wallet balance management to real-time price tracking and live transaction execution. It is designed as a strong full-stack portfolio project with emphasis on scalability, API integration, and clean architecture.
 
-- **Easy Customization**: Tailor the template to fit your brand's unique style and needs.
-- **Fast Development**: Get your exchange up and running quickly with our pre-built components and features.
+---
 
-**Get Started Today!**
+## Features
 
-Explore the demo, review the code, and start building your cryptocurrency exchange platform with React Crypto Exchange Template.
+* **User Authentication**
 
-## Support this project
+  * Secure sign-up and sign-in flow
+  * First-time users are prompted to create an account
 
-You are free to download, change and use it anywhere. I will regularly update this template with new resources and pages I found on the web. Don't hesitate to participate by sending a PR! Maybe your first on Github :)
+* **Real-Time Market Data**
 
-If you like this resource, please follow me on GitHub. Thank you!
+  * Live cryptocurrency prices and charts
+  * Data fetched directly from the Coinbase API
 
-## Demo
+* **Wallet System**
 
-[https://react-crypto-exchange-nine.vercel.app/](https://react-crypto-exchange-nine.vercel.app/)
+  * Auto-funded trial wallet with $1000 virtual balance
+  * Real-time balance updates after every transaction
 
-## Screenshots
+* **Live Trading Simulation**
 
-![Dashboard](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/1-dashboard.png?raw=true)
+  * Buy and sell crypto using real-time prices
+  * No mock data — all transactions are API-driven
 
-![Profile](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/2-profile.png?raw=true)
+* 🧾 **Transaction History**
 
-![Deposit](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/3-deposit.png?raw=true)
+  * Only real, session-based transactions are shown
+  * Old or static records are cleared automatically
 
-![Transactions](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/4-transactions.png?raw=true)
+* ⚡ **Responsive UI**
 
-![Market](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/5-market.png?raw=true)
+  * Clean, modern interface
+  * Optimized for desktop and mobile devices
 
-![Signin](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/6-signin.png?raw=true)
+---
 
-![Signup](https://github.com/cenksari/react-crypto-exchange/blob/master/screenshots/7-signup.png?raw=true)
+## Tech Stack
 
-## Installation
+**Frontend**
 
-1. Clone the project:
+* React / Next.js
+* Tailwind CSS
+* Charting Libraries (for live charts)
 
-   ```bash
-   git clone https://github.com/cenksari/react-crypto-exchange.git
-   ```
+**Backend**
 
-2. Navigate to the project directory:
+* Node.js
+* Express.js
 
-   ```bash
-   cd react-crypto-exchange
-   ```
+**Database**
 
-3. Install dependencies:
+* MongoDB / Supabase
 
-   ```bash
-   npm install
-   ```
+**APIs**
 
-   or
+* Coinbase API (real-time crypto prices)
 
-   ```bash
-   yarn install
-   ```
+---
 
-4. Start the application:
+## 📂 Project Structure
 
-   ```bash
-   npm start
-   ```
+```
+Crypto/
+├── public/          # Static assets
+├── screenshots/     # Project screenshots
+├── src/             # Frontend source code
+├── server/          # Backend logic & APIs
+├── .env.example     # Environment variable template
+├── package.json
+└── README.md
+```
 
-## Usage
+---
 
-Once the application is started, navigate to [http://localhost:3000](http://localhost:3000) in your browser to test application.
+## Getting Started
 
-## Contributing
+### 1. Clone the Repository
 
-If you would like to contribute, please create a new branch and submit a pull request with your changes. Review may be needed before acceptance.
+```bash
+git clone https://github.com/Sohum-Nikam/Crypto.git
+cd Crypto
+```
 
-## Authors
+### 2. Install Dependencies
 
-@cenksari
+```bash
+npm install
+```
 
-## License
+### 3. Setup Environment Variables
 
-MIT
-# Full-Stack-CryptoExchange
-# Full-Stack-CryptoExchange
-# Crypto
+Create a `.env` file using `.env.example` and add your API keys.
+
+### 4. Run the Application
+
+```bash
+npm run dev
+```
+
+---
+
+## Purpose
+
+This project demonstrates:
+
+* Full-stack system design
+* Secure authentication flows
+* Real-time API integration
+* Wallet and transaction logic
+* Clean UI/UX principles
+
+It is ideal for showcasing skills in **full-stack development**, **API handling**, and **real-time data systems**.
+
+## 🤝 Contributions
+
+Contributions, issues, and feature requests are welcome. Feel free to fork the repository and submit a pull request.
+
+---
+
+## ⭐ Support
+
+If you found this project helpful or inspiring, consider giving it a ⭐ on GitHub!
