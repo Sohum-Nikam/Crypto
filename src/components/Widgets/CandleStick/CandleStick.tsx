@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
 
 import ReactApexChart from 'react-apexcharts';
 
@@ -11,8 +12,15 @@ interface ISeries {
   options: any;
 }
 
+interface PriceData {
+  symbol: string;
+  price: number;
+  timestamp: number;
+  error?: string;
+}
+
 // variables
-const data: ISeries = {
+const initialData: ISeries = {
   series: [
     {
       data: [
@@ -170,7 +178,7 @@ const data: ISeries = {
         },
         {
           x: new Date(1538847000000),
-          y: [6602, 6607, 6596.51, 6599.95],
+          y: [6602, 6607, 6596.51, 6600.02],
         },
         {
           x: new Date(1538848800000),
@@ -198,7 +206,7 @@ const data: ISeries = {
         },
         {
           x: new Date(1538859600000),
-          y: [6601.81, 6603.21, 6592.78, 6596.25],
+          y: [6601.81, 6603.21, 6592.78, 6600.02],
         },
         {
           x: new Date(1538861400000),
@@ -279,26 +287,79 @@ const data: ISeries = {
 };
 
 const CandleStick: React.FC = () => {
-  const [state, setState] = useState<ISeries | null>(null);
-
+  const [state, setState] = useState<ISeries>(initialData);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
   useEffect(() => {
-    setState(data);
+    // Connect to WebSocket
+    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:4567');
+    
+    socket.on('priceUpdate', (data: PriceData) => {
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      
+      setError(null);
+      setCurrentPrice(data.price);
+      
+      // Update the chart with the new price
+      setState(prevState => {
+        // Get the current series data
+        const seriesData = [...prevState.series[0].data];
+        
+        // Add the new data point
+        const newPoint = {
+          x: new Date(data.timestamp),
+          y: [data.price, data.price, data.price, data.price] // [open, high, low, close] - all same for current price
+        };
+        
+        // Keep only the last 50 data points to prevent memory issues
+        if (seriesData.length >= 50) {
+          seriesData.shift(); // Remove the oldest point
+        }
+        
+        seriesData.push(newPoint);
+        
+        return {
+          ...prevState,
+          series: [{
+            ...prevState.series[0],
+            data: seriesData
+          }]
+        };
+      });
+    });
+    
+    // Clean up on unmount
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   return (
     <Box>
       <div className='box-title box-vertical-padding box-horizontal-padding no-select'>
         Market history
+        {currentPrice && (
+          <span className="price-display" style={{float: 'right', fontSize: '14px'}}>
+            BTC/USD: ${currentPrice.toFixed(2)}
+          </span>
+        )}
+        {error && (
+          <span className="error-display" style={{float: 'right', fontSize: '12px', color: 'red'}}>
+            Error: {error}
+          </span>
+        )}
       </div>
       <div className='box-content box-content-height-nobutton'>
-        {state && (
-          <ReactApexChart
-            height={470}
-            type='candlestick'
-            series={state.series}
-            options={state.options}
-          />
-        )}
+        <ReactApexChart
+          height={470}
+          type='candlestick'
+          series={state.series}
+          options={state.options}
+        />
       </div>
     </Box>
   );

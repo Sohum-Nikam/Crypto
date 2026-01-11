@@ -8,6 +8,7 @@ import MarketScreen from '../screens/Market/MarketScreen';
 import SigninScreen from '../screens/Members/SigninScreen';
 import SignupScreen from '../screens/Members/SignupScreen';
 import ForgotScreen from '../screens/Members/ForgotScreen';
+import PasswordResetScreen from '../screens/Members/PasswordResetScreen';
 import ProfileScreen from '../screens/Members/ProfileScreen';
 import CapitalScreen from '../screens/Capital/CapitalScreen';
 import NotFoundScreen from '../screens/NotFound/NotFoundScreen';
@@ -30,6 +31,11 @@ const Navigation: React.FC = () => (
     <Route path='/members/forgot-password' element={
       <AuthGuard requireAuth={false}>
         <ForgotScreen />
+      </AuthGuard>
+    } />
+    <Route path='/members/password-reset' element={
+      <AuthGuard requireAuth={false}>
+        <PasswordResetScreen />
       </AuthGuard>
     } />
     

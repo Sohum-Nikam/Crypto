@@ -14,23 +14,26 @@ import FormButton from '../../components/Forms/FormButton';
 // interfaces
 interface IFormProps {
   email: string;
-  password: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
-const SigninScreen: React.FC = () => {
+const PasswordResetScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { simplePasswordReset } = useAuth();
 
   const [formValues, setFormValues] = useState<IFormProps>({
     email: '',
-    password: '',
+    newPassword: '',
+    confirmPassword: '',
   });
 
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
   /**
-   * Handles input changes in the sign-in form.
+   * Handles input changes in the password reset form.
    *
    * @param {React.ChangeEvent<HTMLInputElement>} e - The input change event.
    * @returns {void}
@@ -45,34 +48,38 @@ const SigninScreen: React.FC = () => {
   };
 
   /**
-   * Handles the form submission for the sign-in screen.
+   * Handles the form submission for the password reset screen.
    *
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    * @returns {void}
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-      
+
+    if (formValues.newPassword !== formValues.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (formValues.newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
     setError('');
-      
+    setSuccessMessage('');
+
     try {
-      await login(formValues.email, formValues.password);
-      // Show welcome message and redirect to dashboard after successful login
-      setError('Welcome');
+      await simplePasswordReset(formValues.email, formValues.newPassword);
+      setSuccessMessage('Password updated successfully');
+      
+      // Redirect to sign-in page after a brief delay
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 800);
+        navigate('/members/signin');
+      }, 1500);
     } catch (err: any) {
-      const errorMessage = err.message || 'Login failed';
-      if (errorMessage.includes('Create account first')) {
-        setError(errorMessage);
-        setTimeout(() => {
-          navigate('/members/signup');
-        }, 2000);
-      } else {
-        setError(errorMessage);
-      }
+      setError(err.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }
@@ -92,12 +99,11 @@ const SigninScreen: React.FC = () => {
                     src={`${process.env.PUBLIC_URL}/images/logo.png`}
                   />
                 </div>
-                <h1 className='form-title center'>Sign in</h1>
+                <h1 className='form-title center'>Reset Password</h1>
                 <p className='form-desc center'>
-                  Please make sure that <strong>https://pro.cryptoexchange.com</strong> is written
-                  in your browser's address bar.
+                  Enter your email and new password to reset your account.
                 </p>
-                <form noValidate className='form' onSubmit={handleSubmit}>
+                <form className='form' onSubmit={handleSubmit} noValidate>
                   <div className='form-elements'>
                     <div className='form-line'>
                       <div className='full-width'>
@@ -113,19 +119,31 @@ const SigninScreen: React.FC = () => {
                     </div>
                     <div className='form-line'>
                       <div className='full-width'>
-                        <label htmlFor='password'>Password</label>
+                        <label htmlFor='newPassword'>New password</label>
                         <FormInput
                           type='password'
-                          name='password'
+                          name='newPassword'
                           onChange={handleChange}
-                          value={formValues.password}
-                          placeholder='Enter your password'
+                          value={formValues.newPassword}
+                          placeholder='Enter your new password'
+                        />
+                      </div>
+                    </div>
+                    <div className='form-line'>
+                      <div className='full-width'>
+                        <label htmlFor='confirmPassword'>Confirm new password</label>
+                        <FormInput
+                          type='password'
+                          name='confirmPassword'
+                          onChange={handleChange}
+                          value={formValues.confirmPassword}
+                          placeholder='Re-enter your new password'
                         />
                       </div>
                     </div>
                     <div className='form-line'>
                       <div className='full-width right'>
-                        <Link to='/members/forgot-password'>Forgot password</Link>
+                        <Link to='/members/signin'>Back to Sign In</Link>
                       </div>
                     </div>
                     <div className='form-line'>
@@ -134,16 +152,13 @@ const SigninScreen: React.FC = () => {
                           {error}
                         </div>
                       )}
+                      {successMessage && (
+                        <div className='success-message' style={{ color: 'green', marginBottom: '10px' }}>
+                          {successMessage}
+                        </div>
+                      )}
                       <div className='buttons'>
-                        <FormButton text={loading ? 'Signing in...' : 'Sign in'} disabled={loading} />
-                      </div>
-                    </div>
-                    <div className='form-line'>
-                      <div className='center'>
-                        <p>
-                          If you don't have an account, create a{' '}
-                          <Link to='/members/signup'>new account</Link>.
-                        </p>
+                        <FormButton text={loading ? 'Resetting...' : 'Reset Password'} disabled={loading} />
                       </div>
                     </div>
                   </div>
@@ -157,4 +172,4 @@ const SigninScreen: React.FC = () => {
   );
 };
 
-export default SigninScreen;
+export default PasswordResetScreen;

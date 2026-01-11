@@ -25,6 +25,7 @@ interface AuthContextType {
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
+  simplePasswordReset: (email: string, newPassword: string) => Promise<void>;
   fetchUser: () => Promise<void>;
 }
 
@@ -89,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const login = async (email: string, password: string) => {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -100,10 +101,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const data = await response.json();
 
     if (response.ok) {
-      const { token, user } = data;
+      const { token, user, message } = data;
       localStorage.setItem('token', token);
       setToken(token);
       setUser(user);
+      return message; // Return the welcome message
     } else {
       throw new Error(data.message || 'Login failed');
     }
@@ -127,10 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const data = await response.json();
 
     if (response.ok) {
-      const { token, user } = data;
-      localStorage.setItem('token', token);
-      setToken(token);
-      setUser(user);
+      return data.message; // Return the success message
     } else {
       throw new Error(data.message || 'Registration failed');
     }
@@ -160,13 +159,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return data;
   };
 
-  const resetPassword = async (token: string, password: string) => {
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/reset-password/${token}`, {
+  const resetPassword = async (email: string, newPassword: string) => {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ email, newPassword }),
     });
 
     const data = await response.json();
@@ -175,7 +174,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw new Error(data.message || 'Password reset failed');
     }
     
-    return data;
+    return data.message;
+  };
+
+  const simplePasswordReset = async (email: string, newPassword: string) => {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/simple-password-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, newPassword }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Password reset failed');
+    }
+    
+    return data.message;
   };
 
   const value = {
@@ -187,6 +204,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     forgotPassword,
     resetPassword,
+    simplePasswordReset,
     fetchUser,
   };
 

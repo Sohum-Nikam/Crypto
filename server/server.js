@@ -6,11 +6,17 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const WebSocket = require('websocket').w3cwebsocket;
 const nodemailer = require('nodemailer');
+const { createTransport } = require('nodemailer');
 const http = require('http');
 require('dotenv').config();
 
+// Validate required environment variables
+if (!process.env.COINBASE_API_KEY || !process.env.COINBASE_SECRET_KEY) {
+  console.warn('Warning: Coinbase API credentials not found in environment variables');
+}
+
 // Create transporter for sending emails
-const transporter = nodemailer.createTransporter({
+const transporter = createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: process.env.SMTP_PORT || 587,
   secure: false, // true for 465, false for other ports
@@ -64,6 +70,14 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
 });
 
+// Pre-save middleware to normalize email to lowercase
+userSchema.pre('save', function(next) {
+  if (this.email) {
+    this.email = this.email.toLowerCase();
+  }
+  next();
+});
+
 const User = mongoose.model('User', userSchema);
 
 // Auth Routes
@@ -73,11 +87,15 @@ app.post('/api/auth/register', async (req, res) => {
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { phone }]
+      $or: [{ email: email.toLowerCase() }, { phone }]
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email or phone' });
+      return res.status(409).json({
+        success: false,
+        code: "USER_EXISTS",
+        message: "User already signed in"
+      });
     }
 
     // Hash password
@@ -96,22 +114,10 @@ app.post('/api/auth/register', async (req, res) => {
 
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET || 'fallback_secret_key',
-      { expiresIn: '7d' }
-    );
-
     res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        lastname: user.lastname,
-        email: user.email,
-        phone: user.phone,
-      },
+      success: true,
+      code: "SIGNUP_SUCCESS",
+      message: "Account created"
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -119,20 +125,28 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/signin', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(404).json({
+        success: false,
+        code: "USER_NOT_FOUND",
+        message: "Create account first"
+      });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(401).json({
+        success: false,
+        code: "INVALID_PASSWORD",
+        message: "Invalid credentials"
+      });
     }
 
     // Generate JWT token
@@ -143,6 +157,9 @@ app.post('/api/auth/login', async (req, res) => {
     );
 
     res.json({
+      success: true,
+      code: "LOGIN_SUCCESS",
+      message: "Welcome",
       token,
       user: {
         id: user._id,
@@ -206,33 +223,62 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   }
 });
 
-// Reset Password
-app.post('/api/auth/reset-password/:token', async (req, res) => {
+// Simple Password Reset (without email verification)
+app.post('/api/auth/simple-password-reset', async (req, res) => {
   try {
-    const { token } = req.params;
-    const { password } = req.body;
+    const { email, newPassword } = req.body;
 
-    const user = await User.findOne({
-      resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() },
-    });
-
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
+      return res.status(404).json({ message: 'User not found' });
     }
-
-    // Hash new password
+    
+    // Hash the new password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update the password
     user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
     await user.save();
-
-    res.json({ message: 'Password reset successfully' });
+    
+    res.json({ 
+      success: true,
+      message: 'Password updated successfully'
+    });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('Simple password reset error:', error);
+    res.status(500).json({ message: 'Server error in password reset' });
+  }
+});
+
+// Reset Password (Simple - No Token Required)
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update the password
+    user.password = hashedPassword;
+    await user.save();
+    
+    res.json({ 
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Simple password reset error:', error);
     res.status(500).json({ message: 'Server error in password reset' });
   }
 });
@@ -427,6 +473,54 @@ app.get('/api/coinbase/subscribe-price-updates', (req, res) => {
     clearInterval(interval);
     client.close();
   });
+});
+
+// Real-time price updates for charts
+let priceUpdateInterval;
+
+// Function to fetch and broadcast price updates
+const broadcastPriceUpdates = async () => {
+  try {
+    // Get current BTC-USD price from Coinbase API
+    const response = await axios.get('https://api.exchange.coinbase.com/products/BTC-USD/ticker');
+    const { price } = response.data;
+    
+    // Get timestamp
+    const timestamp = Date.now();
+    
+    // Format data similar to candlestick format
+    const priceData = {
+      symbol: 'BTC-USD',
+      price: parseFloat(price),
+      timestamp: timestamp
+    };
+    
+    // Broadcast to all connected clients
+    io.emit('priceUpdate', priceData);
+    
+  } catch (error) {
+    console.error('Error fetching price update:', error.message);
+    
+    // If API fails, send last known price or fallback
+    const fallbackData = {
+      symbol: 'BTC-USD',
+      price: 0, // This will be handled by frontend as an error state
+      timestamp: Date.now(),
+      error: 'Failed to fetch price'
+    };
+    io.emit('priceUpdate', fallbackData);
+  }
+};
+
+// Start price updates every 5 seconds
+priceUpdateInterval = setInterval(broadcastPriceUpdates, 5000);
+
+// Stop interval on server shutdown
+process.on('SIGINT', () => {
+  if (priceUpdateInterval) {
+    clearInterval(priceUpdateInterval);
+  }
+  process.exit(0);
 });
 
 // Real-time chat functionality
